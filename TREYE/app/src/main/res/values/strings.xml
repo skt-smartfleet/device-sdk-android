@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">DevSupportSDK</string>
+    <string name="title_home">Home</string>
+    <string name="title_dashboard">Dashboard</string>
+    <string name="title_notifications">Notifications</string>
+
+    <string name="connect">CONNECT</string>
+    <string name="auto">AUTO</string>
+    <string name="publish">PUBLISH</string>
+    <string name="disconnect">DISCONNECT</string>
+    <string name="config">설정</string>
+    <string name="select_api">API를 선택하세요.</string>
+</resources>

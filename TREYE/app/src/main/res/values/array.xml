@@ -1,0 +1,15 @@
+<!--?xml version="1.0" encoding="utf-8"?-->
+<resources>
+    <string-array name="api_name">
+        <item>API를 선택해주세요</item>
+        <item>TRE_SendTrip</item>
+        <item>TRE_SendMicroTrip</item>
+        <item>TRE_SendHfd</item>
+        <item>TRE_SendDiagInfo</item>
+        <item>TRE_SendDrivingCollisionWarning</item>
+        <item>TRE_SendParkingCollisionWarning</item>
+        <item>TRE_SendBatteryWarning</item>
+        <item>TRE_SendUnpluggedWarning</item>
+        <item>TRE_SendTurnOffWarning</item>
+    </string-array>
+</resources>
