@@ -35,19 +35,20 @@ import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 import static com.sktelecom.smartfleet.sdk.define.CONFIGS.ACTION_LOG_RECEIVER;
 import static com.sktelecom.smartfleet.sdk.define.CONFIGS.TAG;
 
 
 public class MqttWrapper implements IMqttActionListener, MqttCallback, MqttCallbackExtended {
 
-    private final static int MAX_RETRY_COUNT = 3;
-    private final static int RETRY_INTERVAL = 1000*3;
+    private final static int MAX_RETRY_COUNT = 6;
+    private final static int RETRY_INTERVAL = 1000 * 10;
 
-    // Singleton
     private static MqttWrapper mqttWrapper = null;
 
-    // Data
     private MqttAndroidClient mqttClient;
     private String clientId;
     private MqttConnectionStatus mMqttClientStatus = MqttConnectionStatus.NONE;
@@ -89,56 +90,48 @@ public class MqttWrapper implements IMqttActionListener, MqttCallback, MqttCallb
 
     }
 
-    public void setHost(String host){
+    public void setHost(String host) {
         this.serverHost = host;
     }
 
-    public void setPort(String port){
+    public void setPort(String port) {
         this.serverPort = port;
     }
 
-    public void setToken(String token){
+    public void setToken(String token) {
         this.userName = token;
     }
 
-    public void setTopic(String topic){
+    public void setTopic(String topic) {
         this.topic = topic;
     }
 
-    public boolean isMqttConnectStatus(){
+    public boolean isMqttConnectStatus() {
 
         boolean isConnected;
 
         MqttWrapper.MqttConnectionStatus status = mqttWrapper.getClientStatus();
 
-        LogWrapper.v(TAG, "status="+status);
-
         if (status == MqttWrapper.MqttConnectionStatus.DISCONNECTED ||
                 status == MqttWrapper.MqttConnectionStatus.NONE ||
                 status == MqttWrapper.MqttConnectionStatus.ERROR) {
             isConnected = false;
-        }else{
+        } else {
             isConnected = true;
         }
         return isConnected;
     }
 
     public void initialize(Context context) {
-
         LogWrapper.v(TAG, context.getApplicationContext().toString());
-
         this.mContext = context.getApplicationContext();
-
         initializer();
-
     }
 
     private void initializer() {
 
         MqttWrapper.MqttConnectionStatus status = mqttWrapper.getClientStatus();
         attempts = 0;
-
-        LogWrapper.v(TAG, "MQTT : status " + status);
 
         if (status == MqttWrapper.MqttConnectionStatus.DISCONNECTED ||
                 status == MqttWrapper.MqttConnectionStatus.NONE ||
@@ -178,113 +171,50 @@ public class MqttWrapper implements IMqttActionListener, MqttCallback, MqttCallb
     }
 
     private MqttConnectionStatus getClientStatus() {
-
         return mMqttClientStatus;
     }
 
+    //Callback listener for Demo App
     public void setListener(MqttWrapperListener listener) {
-
         mListener = listener;
     }
 
-
-    // MQTT Defining
-
-    private void subscribeTopic(String topic, int qos) {
-        if (mqttClient != null &&
-                mMqttClientStatus == MqttConnectionStatus.CONNECTED && topic != null) {
-
-            try {
-                LogWrapper.v(TAG, "MQTT : Subscribe to " + topic + ", QoS:" + qos);
-                sendConsoleLog("MQTT : Subscribe to " + topic + ", QoS:" + qos);
-                mqttClient.subscribe(topic, qos);
-
-            } catch (MqttException e) {
-                // need to add reason
-                LogWrapper.e(TAG, "MQTT : Subscribe error");
-                //sendConsoleLog("MQTT : Subscribe error "+e.toString());
-            }
+    //IMqttActionLisener for MQTT publish action
+    IMqttActionListener publishMqttActionListener = new IMqttActionListener(){
+        @Override
+        public void onSuccess(IMqttToken asyncActionToken) {
+            LogWrapper.v(TAG, "[Publish] onSuccess" );
+            sendConsoleLog("[Publish] onSuccess" );
         }
-    }
 
-    private void unsubscribeTopic(String topic) {
-        if (mqttClient != null &&
-                mMqttClientStatus == MqttConnectionStatus.CONNECTED && topic != null) {
-
-            try {
-                LogWrapper.v(TAG, "MQTT : Unsubscribe from " + topic);
-                mqttClient.unsubscribe(topic);
-
-            } catch (MqttException e) {
-                // need to add reason
-                //LogWrapper.e(TAG, "MQTT : Unsubscribe error");
-            }
+        @Override
+        public void onFailure(IMqttToken asyncActionToken, Throwable exception) {
+            LogWrapper.v(TAG, "[Publish] onFailure: " + exception.toString() );
+            sendConsoleLog("[Publish] onFailure");
         }
-    }
+    };
 
-    private void publish(final JSONObject pubMessage, String topic, int qos) {
-        if (mqttClient != null &&
-                mMqttClientStatus == MqttConnectionStatus.CONNECTED && topic != null) {
-
-            try {
-                MqttMessage message = new MqttMessage();
-                message.setPayload(pubMessage.toString().getBytes());
-                LogWrapper.v(TAG, "MQTT : Publish " + message + " for topic " + topic + " qos:" + qos);
-                sendConsoleLog("MQTT : Publish " + message + " for topic " + topic + " qos:" + qos);
-
-                mqttClient.publish(topic, message, qos, null);
-
-            } catch (MqttException e) {
-                LogWrapper.e(TAG, "MQTT : Publish error ");
-                //sendConsoleLog("MQTT : Publish error ");
-            }
+    //IMqttActionLisener for MQTT subscribe action
+    IMqttActionListener subscribeMqttActionListener = new IMqttActionListener(){
+        @Override
+        public void onSuccess(IMqttToken asyncActionToken) {
+            LogWrapper.v(TAG, "[Subscribe] onSuccess " );
+            sendConsoleLog("[Subscribe] onSuccess " );
         }
-    }
 
-    public void sendConsoleLog(String msg){
-        if(this.mContext!=null){
-            if(TextUtils.isEmpty(msg)) return;
-            Intent intent = new Intent(ACTION_LOG_RECEIVER);
-            //remove backslash
-            msg = msg.replace("\\\"", "\"");
-            intent.putExtra("msg", msg);
-            this.mContext.sendBroadcast(intent);
+        @Override
+        public void onFailure(IMqttToken asyncActionToken, Throwable exception) {
+            LogWrapper.v(TAG, "[Subscribe] onFailure: " + exception.toString() );
+            sendConsoleLog("[Subscribe] onFailure");
         }
-    }
-
-    public void disconnect() {
-        if (mqttClient != null) {
-            try {
-                // Note: it seems that the disconnected callback is never invoked. So we fake here that the final state is disconnected
-//                mMqttClientStatus = MqttConnectionStatus.DISCONNECTED;
-//                mqttClient.disconnect(null, this);
-//                mqttClient.unregisterResources();
-//                mqttClient = null;
-//                LogWrapper.v(TAG, "MQTT : Disconnected");
-
-                mMqttClientStatus = MqttConnectionStatus.DISCONNECTING;
-                mqttClient.disconnect(null, this);
-
-                LogWrapper.v(TAG, "MQTT : Disconnected");
-                //sendConsoleLog("MQTT : Disconnected");
-
-            } catch (MqttException e) {
-                LogWrapper.e(TAG, "MQTT : Disconnection error");
-                //sendConsoleLog("MQTT : Disconnection error"+e.toString());
-            }
-        }
-    }
-
+    };
 
     private void connect(Context context, String host, String port, String username, String password) {
 
         clientId = "TRE" + System.currentTimeMillis();
 
-        String uri = "tcp://"+host+":"+port;
+        String uri = "tcp://" + host + ":" + port;
         LogWrapper.v(TAG, "MQTT : Client Connected : " + clientId);
-
-        //sendConsoleLog("MQTT : Client Connected url : " + uri);
-        //sendConsoleLog("MQTT : Client Connected id: " + clientId);
 
         mqttClient = new MqttAndroidClient(context, uri, clientId);
         mqttClient.registerResources(context);
@@ -296,12 +226,10 @@ public class MqttWrapper implements IMqttActionListener, MqttCallback, MqttCallb
         conOpt.setKeepAliveInterval(CONFIGS.keepalive);
 
         if (username != null && username.length() > 0) {
-            //LogWrapper.v(TAG, "MQTT : username: " + username);
             conOpt.setUserName(username);
         }
 
         if (password != null && password.length() > 0) {
-            //LogWrapper.v(TAG, "MQTT : password: " + password);
             conOpt.setPassword(password.toCharArray());
         }
 
@@ -312,21 +240,110 @@ public class MqttWrapper implements IMqttActionListener, MqttCallback, MqttCallb
             mqttClient.connect(conOpt, null, this);
 
         } catch (MqttException e) {
-            LogWrapper.v(TAG, "MQTT : Connection error: ");
-            sendConsoleLog("MQTT : Connection error: "+e.toString());
+            LogWrapper.v(TAG, "MQTT : Connection error: "+e.toString());
+            sendConsoleLog("[ConnectFail] Connection error");
         }
     }
-    // end Region
+
+    private void subscribeTopic(String topic, int qos) {
+        if (mqttClient != null &&
+                mMqttClientStatus == MqttConnectionStatus.CONNECTED && topic != null) {
+
+            try {
+                LogWrapper.v(TAG, "MQTT : Subscribe to " + topic + ", QoS:" + qos);
+                sendConsoleLog("[Action] Subscribed to " + topic + ", QoS:" + qos);
+                mqttClient.subscribe(topic, qos, null, subscribeMqttActionListener);
+
+            } catch (MqttException e) {
+                LogWrapper.e(TAG, "MQTT : Subscribe error");
+            }
+        }
+    }
+
+    private void unsubscribeTopic(String topic) {
+        if (mqttClient != null &&
+                mMqttClientStatus == MqttConnectionStatus.CONNECTED && topic != null) {
+
+            try {
+                LogWrapper.v(TAG, "MQTT : Unsubscribe from " + topic);
+                sendConsoleLog("[Action] Unsubscribe from " + topic);
+                mqttClient.unsubscribe(topic);
+
+            } catch (MqttException e) {
+                LogWrapper.e(TAG, "MQTT : Unsubscribe error");
+            }
+        }
+    }
+
+    private void publish(final JSONObject pubMessage, String topic, int qos) {
+
+        LogWrapper.v(TAG, "MQTT : mMqttClientStatus=" + mMqttClientStatus);
+
+        if (mqttClient != null &&
+                mMqttClientStatus == MqttConnectionStatus.CONNECTED && topic != null) {
+
+            try {
+                MqttMessage message = new MqttMessage();
+                message.setPayload(pubMessage.toString().getBytes());
+                LogWrapper.v(TAG, "[Publish] Message Publishing [" + topic + "] " + message + " qos:" + qos);
+
+                //mqttClient.publish(topic, message, qos, null);
+                //if has wildcard in topic string, remove wildcard.
+                topic = topic.replaceAll("[#]|[+]", "");
+                mqttClient.publish(topic, message, qos, publishMqttActionListener);
+
+            } catch (MqttException e) {
+                LogWrapper.e(TAG, "MQTT : Publish error: "+e.toString());
+            }
+        }
+    }
 
 
-    // Region of IMqttActionListener
+    private void disconnect() {
+        if (mqttClient != null) {
+            try {
+
+                mMqttClientStatus = MqttConnectionStatus.DISCONNECTING;
+                mqttClient.disconnect(null, this);
+
+                LogWrapper.v(TAG, "MQTT : Disconnected");
+
+            } catch (MqttException e) {
+                LogWrapper.e(TAG, "[ConnectFail] Disconnection error: " + e.toString());
+                sendConsoleLog("[ConnectFail] Disconnection error");
+            }
+        }
+    }
+
+    private void sendConsoleLog(String msg) {
+        if (this.mContext != null) {
+            if (TextUtils.isEmpty(msg)) return;
+
+            Intent intent = new Intent(ACTION_LOG_RECEIVER);
+            //remove backslash
+            msg = msg.replace("\\\"", "\"");
+            msg += " " + getCurrentTime();
+            intent.putExtra("msg", msg);
+            this.mContext.sendBroadcast(intent);
+        }
+    }
+
+    private String getCurrentTime() {
+        long now = System.currentTimeMillis();
+        Date date = new Date(now);
+        SimpleDateFormat sdfNow = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        String formatDate = sdfNow.format(date);
+
+        return formatDate;
+    }
+
     @Override
     public void onSuccess(IMqttToken asyncActionToken) {
 
         if (mMqttClientStatus == MqttConnectionStatus.CONNECTING) {
 
-            LogWrapper.v(TAG, "MQTT : Connect onSuccess");
-            sendConsoleLog("MQTT : Connect onSuccess");
+            LogWrapper.v(TAG, "[Connect] Connected to server!");
+            sendConsoleLog("[Connect] Connected to server!");
 
             mMqttClientStatus = MqttConnectionStatus.CONNECTED;
             attempts = 0;
@@ -337,8 +354,9 @@ public class MqttWrapper implements IMqttActionListener, MqttCallback, MqttCallb
 
         } else if (mMqttClientStatus == MqttConnectionStatus.DISCONNECTING) {
 
-            LogWrapper.v(TAG, "MQTT : Disconnect onSuccess");
-            sendConsoleLog("MQTT : Disconnect onSuccess");
+            LogWrapper.v(TAG, "[DisConnect] DisConnected to server!");
+            sendConsoleLog("[DisConnect] DisConnected to server!");
+
             mMqttClientStatus = MqttConnectionStatus.DISCONNECTED;
 
             if (mListener != null) {
@@ -350,19 +368,17 @@ public class MqttWrapper implements IMqttActionListener, MqttCallback, MqttCallb
 
         } else {
             LogWrapper.v(TAG, "MQTT : Unknown onSuccess");
-            sendConsoleLog("MQTT : Unknown onSuccess");
         }
     }
 
     @Override
     public void onFailure(IMqttToken asyncActionToken, Throwable exception) {
-        LogWrapper.v(TAG, "MQTT onFailure. " + exception);
-        sendConsoleLog("MQTT onFailure. " + exception);
+
+        LogWrapper.v(TAG, "[Connect] onFailure: " + exception.toString());
+        sendConsoleLog("[Connect] onFailure: " + exception.toString());
 
         if (attempts < MAX_RETRY_COUNT) {
             attempts++;
-            LogWrapper.v(TAG, "MQTT : Reconnect. attempts=" + attempts);
-            sendConsoleLog("MQTT : Reconnect. attempts=" + attempts);
 
             Runnable ReconnectRunnable = new Runnable() {
 
@@ -370,11 +386,12 @@ public class MqttWrapper implements IMqttActionListener, MqttCallback, MqttCallb
                 public void run() {
                     try {
                         if (mqttClient != null) {
+                            LogWrapper.v(TAG, "MQTT : Reconnect. attempts=" + attempts);
+                            sendConsoleLog("[Connect] Reconnect. attempts=" + attempts);
                             mqttClient.connect(conOpt, null, MqttWrapper.this);
                         }
                     } catch (MqttException e) {
-                        LogWrapper.v(TAG, "MQTT : Connection error: ");
-                        sendConsoleLog("MQTT : Connection error: "+e.toString());
+                        LogWrapper.v(TAG, "MQTT : Connection error: "+e.toString());
                     }
                 }
             };
@@ -388,30 +405,26 @@ public class MqttWrapper implements IMqttActionListener, MqttCallback, MqttCallb
             mListener.onMqttDisconnected();
         }
     }
-    // endRegion
-
-
-    // define MqttCallback
 
     @Override
     public void connectionLost(Throwable cause) {
+
         LogWrapper.v(TAG, "MQTT connection is lost : " + cause);
-        //sendConsoleLog("MQTT connection is lost : " + cause);
 
         if (attempts < MAX_RETRY_COUNT) {
             attempts++;
-            LogWrapper.v(TAG, "MQTT : Reconnect. attempts=" + attempts);
 
             Runnable ReconnectRunnable = new Runnable() {
                 @Override
                 public void run() {
                     try {
                         if (mqttClient != null) {
+                            LogWrapper.v(TAG, "[Connect] Reconnect. attempts= " + attempts);
+                            sendConsoleLog("[Connect] Reconnect. attempts= " + attempts);
                             mqttClient.connect(conOpt, null, MqttWrapper.this);
                         }
                     } catch (MqttException e) {
-                        LogWrapper.v(TAG, "MQTT : Connection error: ");
-                        //sendConsoleLog("MQTT : Connection error: " + e.toString());
+                        LogWrapper.v(TAG, "MQTT : Connection error: "+e.toString());
                     }
                 }
             };
@@ -430,8 +443,8 @@ public class MqttWrapper implements IMqttActionListener, MqttCallback, MqttCallb
     @Override
     public void messageArrived(String topic, MqttMessage message) throws Exception {
 
-        LogWrapper.v(TAG, "MQTT : messageArrived from topic: " + topic + " message : " + message);
-        sendConsoleLog("MQTT : messageArrived from topic: " + topic + " message : " + message);
+        LogWrapper.v(TAG, "[Subcribe] Message Arrived [" + topic + "] " + message);
+        sendConsoleLog("[Subcribe] Message Arrived [" + topic + "] " + message);
 
         try {
             JSONObject receivedMessageObj = new JSONObject(new String(message.getPayload()));
@@ -439,34 +452,22 @@ public class MqttWrapper implements IMqttActionListener, MqttCallback, MqttCallb
             // not null
             if (receivedMessageObj.length() > 0) {
 
-                LogWrapper.v(TAG, "MQTT : messageArrived JSON from topic: " + topic + " message : " + message);
-
-                // not the same device
-                //if (!receivedMessageObj.get("sid").equals(clientId)) {
-                // the sender's position from the link must be higher than the receiver's one
-                //if (Integer.parseInt(receivedMessageObj.getString("pfl")) <= remainDistanceInLink) {
                 if (mListener != null) {
-                    LogWrapper.v(TAG, "MQTT : Call the Message Arrived Callback");
-                    //sendConsoleLog("MQTT : Call the Message Arrived Callback");
                     mListener.onMqttMessageArrived(topic, message);
                 }
-                //}
-                //}
 
-                // Fix duplicated message
                 message.clearPayload();
             }
 
         } catch (JSONException e) {
             LogWrapper.v(TAG, "Unexpected JSON exception in MessageArrived");
-            //sendConsoleLog("Unexpected JSON exception in MessageArrived " +e.toString());
         }
     }
 
     @Override
     public void deliveryComplete(IMqttDeliveryToken token) {
-        LogWrapper.v(TAG, "MQTT : DeliveryComplete - get PUBACK from MQTT Server");
-        //sendConsoleLog("MQTT : DeliveryComplete - get PUBACK from MQTT Server");
+        LogWrapper.v(TAG, "[Publish] Message Delivered");
+        sendConsoleLog("[Publish] Message Delivered");
     }
 
     @Override
@@ -475,8 +476,8 @@ public class MqttWrapper implements IMqttActionListener, MqttCallback, MqttCallb
         mMqttClientStatus = MqttConnectionStatus.CONNECTED;
         attempts = 0;
 
-        LogWrapper.v(TAG, "MQTT : connect Complete : " + serverURI);
-        sendConsoleLog("MQTT : connect Complete : " + serverURI);
+        LogWrapper.v(TAG, "[Connect] connect Complete: " + serverURI);
+        sendConsoleLog("[Connect] connect Complete: " + serverURI);
 
         subscribeLinkId(topic);
 
@@ -486,11 +487,10 @@ public class MqttWrapper implements IMqttActionListener, MqttCallback, MqttCallb
 
     }
 
+    // Demo 앱에서 사용하기 위한 I/F 제공
     public interface MqttWrapperListener {
         void onMqttConnected();
-
         void onMqttDisconnected();
-
         void onMqttMessageArrived(String topic, MqttMessage mqttMessage);
     }
 
@@ -530,7 +530,7 @@ public class MqttWrapper implements IMqttActionListener, MqttCallback, MqttCallb
     public void TRE_SendTrip() {
         Trip trip = new Trip();
         trip.setDemoData();
-        LogWrapper.v(TAG, "trip.toString()="+trip.toString());
+        //LogWrapper.v(TAG, "trip.toString()="+trip.toString());
         publishTrip(TripType.TRIP, trip.tid, trip.stt, trip.edt, trip.dis, trip.tdis, trip.fc, trip.stlat, trip.stlon, trip.edlat, trip.edlon, trip.ctp, trip.coe, trip.fct, trip.hsts, trip.mesp, trip.idt, trip.btv, trip.gnv, trip.wut, trip.usm, trip.est, trip.fwv, trip.dtvt);
     }
 
@@ -583,15 +583,21 @@ public class MqttWrapper implements IMqttActionListener, MqttCallback, MqttCallb
     }
 
 
-    public void TRE_SendAttribute(){}
-    public void TRE_SendTelemetry(){};
-    public void TRE_ProcessRpc(){};
-    public void TRE_SendRpcResult(){};
+    public void TRE_SendAttribute() {
+    }
+
+    public void TRE_SendTelemetry() {
+    }
+
+    public void TRE_ProcessRpc() {
+    }
+
+    public void TRE_SendRpcResult() {
+    }
 
 
 
     // TODO: GetTrip CASE별 MQTT 메소드 구현 2017-09-25
-
 
     public void publishTrip(TripType eventType, int tid, long stt, long edt, int dis, int tdis, int fc, double stlat, double stlon, double edlat, double edlon, int ctp, double coe, int fct, int hsts, int mesp, int idt, double btv, double gnv, int wut, int usm, int est, String fwv, int dtvt) {
         // tripMessage need to be redefine

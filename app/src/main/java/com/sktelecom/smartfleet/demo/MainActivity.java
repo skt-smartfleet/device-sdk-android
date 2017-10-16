@@ -102,7 +102,6 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onMqttMessageArrived(String topic, MqttMessage mqttMessage) {
                 LogWrapper.v(TAG, "MQTT onMqttMessageArrived : in the main activity ");
-
             }
         });
 
@@ -172,7 +171,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onDestroy() {
 
         if (mqttWrapper != null) {
-            mqttWrapper.disconnect();
+            mqttWrapper.TRE_Disconnect();
             mqttWrapper.setListener(null);
             mqttWrapper = null;
 
@@ -194,7 +193,7 @@ public class MainActivity extends AppCompatActivity {
                         mqttWrapper.TRE_Connect(getBaseContext());
                         connect.setText(R.string.connect);
                     } else {
-                        mqttWrapper.disconnect();
+                        mqttWrapper.TRE_Disconnect();
                         connect.setText(R.string.disconnect);
                     }
                     break;
@@ -214,6 +213,7 @@ public class MainActivity extends AppCompatActivity {
                     break;
 
                 case R.id.publish:
+                    LogWrapper.v(TAG, "selectedAPINum="+selectedAPINum);
                     switch (selectedAPINum) {
                         case (CODES.TRIP):
                             mqttWrapper.TRE_SendTrip();
