@@ -1,11 +1,18 @@
 package com.sktelecom.smartfleet.sdk.obj.result;
 
-public class Activation {
+public class DeviceActivation {
 
-    String vid;
+    public String vid;
 
-    public Activation(String vid) {
+    public DeviceActivation() {
+    }
+
+    public DeviceActivation(String vid) {
         this.vid = vid;
+    }
+
+    public void setDemoData(){
+        this.vid = "00가0000";
     }
 
     @Override
