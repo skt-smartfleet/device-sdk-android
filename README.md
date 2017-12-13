@@ -57,6 +57,16 @@ T-RemotEye Proxy에 접속, 메시지 전송 등을 위해 `defaultPackage.net`�
 ### Connect
 
 ```
+void com.sktelecom.smartfleet.sdk.net.MqttWrapper.TRE_Connect(Context context)
+```
+지정된 서버 정보로 TRE 플랫폼에 MQTTS 프로토콜로 접속합니다.
+
+* Parameters
+  * **context**	Context 값
+* Returns
+  * N/A
+
+```
 void com.sktelecom.smartfleet.sdk.net.MqttWrapper.connect(Context context, String host, String port, String username)
 ```
 
@@ -235,6 +245,58 @@ void com.sktelecom.smartfleet.sdk.net.MqttWrapper.publishMqttActionListener.onFa
 #### Trip
 
 ```
+void com.sktelecom.smartfleet.sdk.net.MqttWrapper.TRE_SendTrip()
+```
+
+Trip 이벤트를 실행하는 함수입니다.
+
+```
+void com.sktelecom.smartfleet.sdk.obj.payload.Trip.Trip()
+```
+
+Trip 이벤트에 필요한 파라미터를 생성하는 함수입니다.
+
+```
+void com.sktelecom.smartfleet.sdk.obj.payload.Trip.setDemoData()
+```
+
+임의로 Trip 파라미터 값을 세팅합니다.
+
+```
+void com.sktelecom.smartfleet.sdk.net.MqttWrapper.publishTrip(TripType eventType, int tid, long stt, long edt, int dis, int tdis, int fc, double stlat, double stlon, double edlat, double edlon, int ctp, double coe, int fct, int hsts, int mesp, int idt, double btv, double gnv, int wut, int usm, int est, String fwv, int dtvt)
+```
+
+Trip을 발행하는 함수입니다.
+
+* Parameters
+  * **eventType** Trip Type
+  * **tid** Trip 고유 번호
+  * **stt** Trip의 시작 날짜 및 시간(UTC)
+  * **edt** Trip의 종료 날짜 및 시간(UTC)
+  * **dis** Trip의 주행거리
+  * **tdis** 차량의 총 주행거리
+  * **fc** 연료소모량
+  * **stlat** 운행 시작 좌표의 위도
+  * **stlon** 운행 시작 좌표의 경도
+  * **edlat** 운행 종료 좌표의 위도
+  * **edlon** 운행 종료 좌표의 경도
+  * **ctp** 부동액(냉각수) 평균온도
+  * **coe** Trip의 탄소 배출량
+  * **fct** 연료차단 상태의 운행시간
+  * **hsts** Trip의 최고 속도
+  * **mesp** Trip의 평균 속도
+  * **idt** Trip의 공회전 시간
+  * **btv** 배터리 전압(시동OFF후 전압)
+  * **gnv** 발전기 전압(주행중 최고 전압)
+  * **wut** Trip의 웜업시간(주행전 시동 시간)
+  * **usm** BT가 연결된 휴대폰 번호
+  * **est** 80~100km 운행 시간
+  * **fwv** 펌웨어 버전
+  * **dtvt** 주행시간
+* Returns
+  * N/A
+
+```
 void com.sktelecom.smartfleet.sdk.obj.payload.Trip.Trip(int tid, long stt, long edt, int dis, int tdis, int fc, double stlat, double stlon, double edlat, double edlon, int ctp, double coe, int fct, int hsts, int mesp, int idt, double btv, double gnv, int wut, int usm, int est, String fwv, int dtvt)
 ```
 
@@ -270,6 +332,48 @@ void com.sktelecom.smartfleet.sdk.obj.payload.Trip.Trip(int tid, long stt, long 
 #### Microtrip
 
 ```
+void com.sktelecom.smartfleet.sdk.net.MqttWrapper.TRE_SendMicroTrip()
+```
+
+Microtrip 이벤트를 실행하는 함수입니다.
+
+```
+void com.sktelecom.smartfleet.sdk.obj.payload.MicroTrip.MicroTrip()
+```
+
+Microtrip 이벤트에 필요한 파라미터를 생성하는 함수입니다.
+
+```
+void com.sktelecom.smartfleet.sdk.obj.payload.MicroTrip.setDemoData()
+```
+
+임의로 Microtrip 파라미터 값을 세팅합니다.
+
+```
+void com.sktelecom.smartfleet.sdk.net.MqttWrapper.publishMicroTrip(TripType eventType, int tid, int fc, double lat, double lon, int lc, long clt, int cdit, int rpm, int sp, int em, int el, String xyz, double vv, int tpos)
+```
+
+Microtrip을 발행하는 함수입니다.
+
+* Parameters
+  * **tid** Trip 고유 번호
+  * **fc** 연료소모량
+  * **lat** 위도 (WGS84)
+  * **lon** 경도 (WGS84)
+  * **lc** 측정 한 위치 값의 정확도
+  * **clt** 단말기 기준 수집 시간
+  * **cdit** Trip의 현재시점까지 주행거리
+  * **rpm** rpm
+  * **sp** 차량 속도
+  * **em** 한 주기 동안 발생한 이벤트(Hexastring)
+  * **el** 엔진 부하
+  * **xyz** 가속도 X, Y 및 각속도 Y 값
+  * **vv** 배터리 전압 (시동 OFF 후 전압)
+  * **tpos** 엑셀 포지션 값
+* Returns
+  * N/A
+
+```
 void com.sktelecom.smartfleet.sdk.obj.payload.MicroTrip.MicroTrip(int tid, int fc, double lat, double lon, int lc, long clt, int cdit, int rpm, int sp, int em, int el, String xyz, double vv, int tpos)
 ```
 
@@ -296,6 +400,36 @@ void com.sktelecom.smartfleet.sdk.obj.payload.MicroTrip.MicroTrip(int tid, int f
 #### HFD Capability Infomation
 
 ```
+void com.sktelecom.smartfleet.sdk.net.MqttWrapper.TRE_SendHfd()
+```
+
+HFD Capability Infomation 이벤트를 실행하는 함수입니다.
+
+```
+void com.sktelecom.smartfleet.sdk.obj.payload.HFDCapabilityInfomation.HFDCapabilityInfomation()
+```
+
+HFD Capability Infomation 이벤트에 필요한 파라미터를 생성하는 함수입니다.
+
+```
+void com.sktelecom.smartfleet.sdk.obj.payload.HFDCapabilityInfomation.setDemoData()
+```
+
+임의로 HFD Capability Infomation 파라미터 값을 세팅합니다.
+
+```
+void publishHFDCapabilityInfomation(TripType eventType, int cm)
+```
+
+HFD Capability Infomation을 발행하는 함수입니다.
+
+* Parameters
+  * **eventType** Event Type 구별
+  * **cm** OBD가 전송할 수 있는 HFD 항목 (Hexastring)
+* Returns
+  * N/A
+
+```
 void com.sktelecom.smartfleet.sdk.obj.payload.HFDCapabilityInfomation.HFDCapabilityInfomation(int cm)
 ```
 
@@ -307,6 +441,22 @@ void com.sktelecom.smartfleet.sdk.obj.payload.HFDCapabilityInfomation.HFDCapabil
   * N/A
 
 #### Diagnostic Information
+
+```
+void com.sktelecom.smartfleet.sdk.net.MqttWrapper.TRE_SendDiagInfo()
+```
+
+Diagnostic Information 이벤트를 실행하는 함수입니다.
+
+```
+void com.sktelecom.smartfleet.sdk.obj.payload.DiagnosticInfomation.DiagnosticInfomation()
+```
+
+Diagnostic Information 이벤트에 필요한 파라미터를 생성하는 함수입니다.
+
+```
+void com.sktelecom.smartfleet.sdk.obj.payload.DiagnosticInfomation.setDemoData()
+```
 
 임의로 Diagnostic Information 파라미터 값을 세팅합니다.
 
@@ -342,6 +492,38 @@ void com.sktelecom.smartfleet.sdk.obj.payload.DiagnosticInfomation.DiagnosticInf
 #### Driving Collision Warning
 
 ```
+void com.sktelecom.smartfleet.sdk.net.MqttWrapper.TRE_SendDrivingCollisionWarning()
+```
+
+Driving Collision Warning 이벤트를 실행하는 함수입니다.
+
+```
+void com.sktelecom.smartfleet.sdk.obj.payload.DrivingCollisionWarning.DrivingCollisionWarning()
+```
+
+Driving Collision Warning 이벤트에 필요한 파라미터를 생성하는 함수입니다.
+
+```
+void com.sktelecom.smartfleet.sdk.obj.payload.DrivingCollisionWarning.setDemoData()
+```
+
+Driving Collision Warning 파라미터 값을 세팅합니다.
+
+```
+void com.sktelecom.smartfleet.sdk.net.MqttWrapper.publishDrivingCollisionWarning(TripType eventType, int tid, double dclat, double dclon)
+```
+
+Driving Collision Warning 을 발행하는 함수입니다.
+
+* Parameters
+  * **eventType** Event Type 구별
+  * **tid** Trip 고유 번호
+  * **dclat** 위도
+  * **dclon** 경도
+* Retruns
+  * N/A
+
+```
 void com.sktelecom.smartfleet.sdk.obj.payload.DrivingCollisionWarning.DrivingCollisionWarning(int tid, double dclat, double dclon)
 ```
 
@@ -355,6 +537,24 @@ void com.sktelecom.smartfleet.sdk.obj.payload.DrivingCollisionWarning.DrivingCol
   * N/A
 
 #### Parking Collision Warning
+
+```
+void com.sktelecom.smartfleet.sdk.net.MqttWrapper.TRE_SendParkingCollisionWarning()
+```
+
+Parking Collision Warning 이벤트를 실행하는 함수입니다.
+
+```
+void com.sktelecom.smartfleet.sdk.obj.payload.ParkingCollisionWarning.ParkingCollisionWarning()
+```
+
+Parking Collision Warning 이벤트에 필요한 파라미터를 생성하는 함수입니다.
+
+```
+void com.sktelecom.smartfleet.sdk.obj.payload.ParkingCollisionWarning.setDemoData()
+```
+
+임의로 Parking Collision Warning 파라미터 값을 세팅합니다.
 
 ```
 void com.sktelecom.smartfleet.sdk.net.MqttWrapper.publishParkingCollisionWarning(TripType eventType, double pclat, double pclon)
@@ -384,6 +584,35 @@ void com.sktelecom.smartfleet.sdk.obj.payload.ParkingCollisionWarning.ParkingCol
 #### Battery Warning
 
 ```
+void com.sktelecom.smartfleet.sdk.net.MqttWrapper.TRE_SendBatteryWarning()
+```
+
+Battery Warning 이벤트를 실행하는 함수입니다.
+
+```
+void com.sktelecom.smartfleet.sdk.obj.payload.BatteryWarning.BatteryWarning()
+```
+
+Battery Warning 이벤트에 필요한 파라미터를 생성하는 함수입니다.
+
+```
+void com.sktelecom.smartfleet.sdk.obj.payload.BatteryWarning.setDemoData()
+```
+임의로 Battery Warning 파라미터 값을 세팅합니다.
+
+```
+void com.sktelecom.smartfleet.sdk.net.MqttWrapper.publishBatteryWarning(TripType eventType, int wbv)
+```
+
+Battery Warning을 발행하는 함수입니다.
+
+* Parameters
+  * **eventType** Event Type 구별
+  * **wbv** 배터리 전압
+* Retruns
+  * N/A
+
+```
 void com.sktelecom.smartfleet.sdk.obj.payload.BatteryWarning.BatteryWarning(int wbv)
 ```
 
@@ -395,6 +624,37 @@ void com.sktelecom.smartfleet.sdk.obj.payload.BatteryWarning.BatteryWarning(int 
   * N/A
 
 #### Unplugged Warning
+
+```
+void com.sktelecom.smartfleet.sdk.net.MqttWrapper.TRE_SendUnpluggedWarning()
+```
+
+Unplugged Warning 이벤트를 실행하는 함수입니다.
+
+```
+void com.sktelecom.smartfleet.sdk.obj.payload.UnpluggedWarning.UnpluggedWarning()
+```
+
+Unplugged Warning 이벤트에 필요한 파라미터를 생성하는 함수입니다.
+
+```
+void com.sktelecom.smartfleet.sdk.obj.payload.UnpluggedWarning.setDemoData()
+```
+
+임의로 Unplugged Warning 파라미터 값을 세팅합니다.
+
+```
+void com.sktelecom.smartfleet.sdk.net.MqttWrapper.publishUnpluggedWarning(TripType eventType, int unpt, int pt)
+```
+
+Unplugged Warningn을 발행하는 함수입니다.
+
+* Parameters
+  * **eventType** Event Type 구별
+  * **unpt** 탈착 시간(UTC Timestamp)
+  * **pt** 부착 시간(UTC Timestamp)
+* Retruns
+  * N/A
 
 ```
 void com.sktelecom.smartfleet.sdk.obj.payload.UnpluggedWarning.UnpluggedWarning(int unpt, int pt)
@@ -409,6 +669,36 @@ void com.sktelecom.smartfleet.sdk.obj.payload.UnpluggedWarning.UnpluggedWarning(
   * N/A
 
 #### Turn Off Warning
+
+```
+void com.sktelecom.smartfleet.sdk.net.MqttWrapper.TRE_SendTurnOffWarning()
+```
+
+Turn Off Warning 이벤트를 실행하는 함수입니다.
+
+```
+void com.sktelecom.smartfleet.sdk.obj.payload.TurnoffWarning.TurnoffWarning()
+```
+
+Turn Off Warning 이벤트에 필요한 파라미터를 생성하는 함수입니다.
+
+```
+void com.sktelecom.smartfleet.sdk.obj.payload.TurnoffWarning.setDemoData()
+```
+
+임의로 Turn Off Warning 파라미터 값을 세팅합니다.
+
+```
+void com.sktelecom.smartfleet.sdk.net.MqttWrapper.publishTurnoffWarning(TripType eventType, String rs)
+```
+
+Turn Off Warning을 발행하는 함수입니다.
+
+* Parameters
+  * **eventType** Event Type 구별
+  * **rs** 단말 종료 원인
+* Retruns
+  * N/A
 
 ```
 void com.sktelecom.smartfleet.sdk.obj.payload.TurnoffWarning.TurnoffWarning(String rs)

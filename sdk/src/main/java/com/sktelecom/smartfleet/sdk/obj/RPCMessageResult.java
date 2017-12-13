@@ -1,42 +1,54 @@
 package com.sktelecom.smartfleet.sdk.obj;
 
+import com.google.gson.Gson;
+import com.sktelecom.smartfleet.sdk.net.RPCType;
+import com.sktelecom.smartfleet.sdk.obj.payload.Trip;
+import com.sktelecom.smartfleet.sdk.obj.request.FirmwareUpdate;
+import com.sktelecom.smartfleet.sdk.obj.result.DeviceActivation;
+import com.sktelecom.smartfleet.sdk.obj.result.DeviceSerialNumberCheck;
+import com.sktelecom.smartfleet.sdk.util.LogWrapper;
+
+import org.json.JSONObject;
+
+import static com.sktelecom.smartfleet.sdk.define.CODES.SUCCESS_RESULT;
+import static com.sktelecom.smartfleet.sdk.define.CONFIGS.TAG;
+
 public class RPCMessageResult {
 
-    String result;
-    String addInfo;
+    String rst;
+    String aif;
 
     public RPCMessageResult() {
     }
 
-    public RPCMessageResult(String result, String addInfo) {
-        this.result = result;
-        this.addInfo = addInfo;
-    }
+    public JSONObject messagePackage(int ty, Object obj) {
 
-    public String getResult() {
-        return result;
-    }
+        Gson gson = new Gson();
 
-    public void setResult(String result) {
-        this.result = result;
-    }
+        JSONObject message = new JSONObject();
 
-    public String getAddInfo() {
-        return addInfo;
-    }
+        try {
 
-    public void setAddInfo(String addInfo) {
-        this.addInfo = addInfo;
-    }
+            message.put("results", SUCCESS_RESULT);
 
-    @Override
-    public String toString() {
+            if (ty == RPCType.DEVICE_ACTIVATION.ordinal()) {
+                message.put("additionalInfo", new JSONObject(gson.toJson((DeviceActivation) obj)));
+            } else if (ty == RPCType.FIRMWARE_UPDATE.ordinal()) {
+            } else if (ty == RPCType.ODB_RESET.ordinal()) {
+            } else if (ty == RPCType.DEVICE_SERIAL_NUMBER_CHECK.ordinal()) {
+                message.put("additionalInfo", new JSONObject(gson.toJson((DeviceSerialNumberCheck) obj)));
+            } else if (ty == RPCType.CLEAR_DEVICE_DATA.ordinal()) {
+            } else if (ty == RPCType.FIRMWARE_UPDATE_CHUNK.ordinal()) {
 
-        StringBuffer stringBuffer = new StringBuffer();
+            }
 
-        stringBuffer.append("result="+result+"\n");
-        stringBuffer.append("addInfo="+addInfo+"\n");
+        } catch (Exception e) {
 
-        return stringBuffer.toString();
+            LogWrapper.e(TAG, "Unexpected JSON exception in message:::" + e.toString());
+
+        }
+
+        return message;
+
     }
 }

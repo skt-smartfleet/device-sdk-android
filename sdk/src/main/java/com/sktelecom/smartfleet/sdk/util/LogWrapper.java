@@ -4,7 +4,12 @@ import android.util.Log;
 
 import com.sktelecom.smartfleet.sdk.define.CONFIGS;
 
-
+/**
+ * Log Wrapper class
+ *
+ * @author 유엔젤
+ * @version 0.1
+ */
 public class LogWrapper {
 
     private static final String TAG = "LogWrapper";
@@ -23,7 +28,7 @@ public class LogWrapper {
 
     public static void v(String tag, String msg) {
         if(CONFIGS.IS_DEBUG_LOG) {
-            Log.v(tag, msg);
+            Log.i(tag, msg);
         }
     }
 

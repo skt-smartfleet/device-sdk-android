@@ -2,8 +2,8 @@ apply plugin: 'com.android.library'
 
 android {
 
-    def appVersionName = "0.8.3"
-    def appVersionCode = 83
+    def appVersionName = "0.9.0"
+    def appVersionCode = 90
 
     //배포 파일명
     def archivesBaseName = 'SMARTFLEET_SDK_' + appVersionName+ "+build.1"
@@ -30,6 +30,7 @@ android {
             buildConfigField "boolean", "IS_DEBUG_LOG", "false"
         }
         debug {
+            minifyEnabled false
             buildConfigField "boolean", "IS_DEBUG_LOG", "true"
         }
     }

@@ -1,16 +1,17 @@
 package com.sktelecom.smartfleet.sdk.net;
 
+/**
+ * RPC Type Enum class
+ *
+ * @author 유엔젤
+ * @version 0.1
+ */
 public enum RPCType {
-    ACTIVIATION_REQ,
-    RESET,
-    SERIAL,
-    GET_RADIO_USAGE,
-    GET_DEV_INFO,
-    CLEAR_DATA,
-    STOP_PUSH,
-    SEND_CAR_DB,
-    FW_UP_CHUCK,
-    GET_MICRO_TRIP,
-    GET_TRIP
+    DEVICE_ACTIVATION,
+    FIRMWARE_UPDATE,
+    ODB_RESET,
+    DEVICE_SERIAL_NUMBER_CHECK,
+    CLEAR_DEVICE_DATA,
+    FIRMWARE_UPDATE_CHUNK
 }
 

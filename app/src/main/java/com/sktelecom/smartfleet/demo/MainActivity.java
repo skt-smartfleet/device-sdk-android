@@ -18,16 +18,22 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.sktelecom.smartfleet.sdk.define.CODES;
-import com.sktelecom.smartfleet.sdk.net.MqttWrapper;
+import com.sktelecom.smartfleet.sdk.net.SFMqttWrapper;
 import com.sktelecom.smartfleet.sdk.util.LogWrapper;
 
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 
+import static com.sktelecom.smartfleet.sdk.define.CODES.CLEAR_DEVICE_DATA_STR;
+import static com.sktelecom.smartfleet.sdk.define.CODES.DEVICE_ACTIVATION_STR;
+import static com.sktelecom.smartfleet.sdk.define.CODES.DEVICE_SERIAL_NUMBER_CHECK_STR;
+import static com.sktelecom.smartfleet.sdk.define.CODES.FIRMWARE_UPDATE_CHUNK_STR;
+import static com.sktelecom.smartfleet.sdk.define.CODES.FIRMWARE_UPDATE_STR;
+import static com.sktelecom.smartfleet.sdk.define.CODES.OBD_RESET_STR;
 import static com.sktelecom.smartfleet.sdk.define.CONFIGS.ACTION_LOG_RECEIVER;
 
 public class MainActivity extends AppCompatActivity {
 
-    private MqttWrapper mqttWrapper;
+    private SFMqttWrapper SFMqttWrapper;
     private static final String TAG = "SMARTFLEET.DEMO";
     private static final int AUTO_PERIOD = 1*1000;
 
@@ -80,15 +86,17 @@ public class MainActivity extends AppCompatActivity {
         });
 
         //MQTT 접속에 대한 Event Callback
-        mqttWrapper = MqttWrapper.getInstance();
+        SFMqttWrapper = SFMqttWrapper.getInstance();
 
-        mqttWrapper.setListener(new MqttWrapper.MqttWrapperListener() {
+        SFMqttWrapper.setListener(new SFMqttWrapper.MqttWrapperListener() {
             @Override
             public void onMqttConnected() {
                 LogWrapper.v(TAG, "MQTT onMqttConnected : in the main activity ");
                 connect.setText(R.string.disconnect);
                 publish.setClickable(true);
                 auto.setClickable(true);
+                //connect 성공 시 subscribe : connect 와 subscribe 메소드 분리
+                SFMqttWrapper.subscribeTopic();
             }
 
             @Override
@@ -103,6 +111,34 @@ public class MainActivity extends AppCompatActivity {
             public void onMqttMessageArrived(String topic, MqttMessage mqttMessage) {
                 LogWrapper.v(TAG, "MQTT onMqttMessageArrived : in the main activity ");
             }
+
+            @Override
+            /**
+             * RPC 메세지 수신
+             * Response응답은 SDK 에서 자동으로 처리되고 아래 함수내에서 method조건을 구현후 Result 함수를호출하도록한다.
+             */
+            public void onRPCMessageArrived(String topic, String request_id, String method, MqttMessage mqttMessage) {
+                if (method.equals(DEVICE_ACTIVATION_STR)) {
+                    // 단말이 Activation이 필요한 경우에 Activation Flow에 따라 정상적으로 접속이 되는지 확인
+                    SFMqttWrapper.resultDeviceActivation("00가0000",topic);
+                } else if (method.equals(FIRMWARE_UPDATE_STR)) {
+                    // F/W Update에 대한 원격 요청을 정상적으로 수행하는지 확인
+                    SFMqttWrapper.resultFirmwareUpdate(topic);
+                } else if (method.equals(OBD_RESET_STR)) {
+                    // 단말 리셋을 정상적으로 수행하는지 확인
+                    SFMqttWrapper.resultOBDReset(topic);
+                } else if (method.equals(DEVICE_SERIAL_NUMBER_CHECK_STR)) {
+                    // 단말 시리얼키 검사
+                    SFMqttWrapper.resultDeviceSerialNumberCheck("70d71b00-71c9-11e7-b3e0-e5673983c7b9",topic);
+                } else if (method.equals(CLEAR_DEVICE_DATA_STR)) {
+                    // 단말 데이터초기화
+                    SFMqttWrapper.resultClearDeviceData(topic);
+                } else if (method.equals(FIRMWARE_UPDATE_CHUNK_STR)) {
+                    // Firmware Update Chunk 이벤트
+                    SFMqttWrapper.resultFirmwareUpdateChunk(topic);
+                }
+            }
+            
         });
 
         // MQTT SDK 로그 생성시 콘솔로그 영역에 보여주기 위한 리시버 동작 처리
@@ -110,7 +146,7 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onReceive(Context context, Intent intent) {
-                LogWrapper.v(TAG, "logReceiver:::intent=" + intent);
+                //LogWrapper.v(TAG, "logReceiver:::intent=" + intent);
                 if (intent != null && !TextUtils.isEmpty(intent.getStringExtra("msg"))) {
                     writeConsoleLog(intent.getStringExtra("msg"));
                 }
@@ -145,7 +181,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onResume() {
         super.onResume();
-        if (!mqttWrapper.isMqttConnectStatus()) {
+        if (!SFMqttWrapper.isMqttConnectStatus()) {
             connect.setText(R.string.connect);
             auto.setClickable(false);
             publish.setClickable(false);
@@ -156,10 +192,9 @@ public class MainActivity extends AppCompatActivity {
         }
 
         SharedPreferences prefs = getSharedPreferences(TAG, MODE_PRIVATE);
-        mqttWrapper.setHost(prefs.getString("HOST", mqttWrapper.serverHost));
-        mqttWrapper.setPort(prefs.getString("PORT", mqttWrapper.serverPort));
-        mqttWrapper.setToken(prefs.getString("TOKEN", mqttWrapper.userName));
-        mqttWrapper.setTopic(prefs.getString("TOPIC", mqttWrapper.topic));
+        SFMqttWrapper.setHost(prefs.getString("HOST", SFMqttWrapper.serverHost));
+        SFMqttWrapper.setPort(prefs.getString("PORT", SFMqttWrapper.serverPort));
+        SFMqttWrapper.setUserName(prefs.getString("USER_NAME", SFMqttWrapper.userName));
     }
 
     @Override
@@ -170,10 +205,10 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
 
-        if (mqttWrapper != null) {
-            mqttWrapper.TRE_Disconnect();
-            mqttWrapper.setListener(null);
-            mqttWrapper = null;
+        if (SFMqttWrapper != null) {
+            SFMqttWrapper.mqttDisconnect();
+            SFMqttWrapper.setListener(null);
+            SFMqttWrapper = null;
 
             LogWrapper.v(TAG, "onDestroy() ");
         }
@@ -189,61 +224,58 @@ public class MainActivity extends AppCompatActivity {
 
             switch (v.getId()) {
                 case R.id.connect:
-                    if (!mqttWrapper.isMqttConnectStatus()) {
-                        mqttWrapper.TRE_Connect(getBaseContext());
+                    if (!SFMqttWrapper.isMqttConnectStatus()) {
+                        SFMqttWrapper.mqttConnect(getBaseContext());
                         connect.setText(R.string.connect);
                     } else {
-                        mqttWrapper.TRE_Disconnect();
+                        SFMqttWrapper.mqttDisconnect();
                         connect.setText(R.string.disconnect);
                     }
                     break;
 
                 case R.id.auto:
 
-                    mqttWrapper.TRE_SendTrip();
-                    mqttWrapper.TRE_SendMicroTrip();
-                    mqttWrapper.TRE_SendHfd();
-                    mqttWrapper.TRE_SendDiagInfo();
-                    mqttWrapper.TRE_SendDrivingCollisionWarning();
-                    mqttWrapper.TRE_SendParkingCollisionWarning();
-                    mqttWrapper.TRE_SendBatteryWarning();
-                    mqttWrapper.TRE_SendUnpluggedWarning();
-                    mqttWrapper.TRE_SendTurnOffWarning();
+                    SFMqttWrapper.sendTrip();
+                    SFMqttWrapper.sendMicroTrip();
+                    SFMqttWrapper.sendHfd();
+                    SFMqttWrapper.sendDiagInfo();
+                    SFMqttWrapper.sendDrivingCollisionWarning();
+                    SFMqttWrapper.sendParkingCollisionWarning();
+                    SFMqttWrapper.sendBatteryWarning();
+                    SFMqttWrapper.sendUnpluggedWarning();
+                    SFMqttWrapper.sendTurnOffWarning();
 
                     break;
 
                 case R.id.publish:
-                    LogWrapper.v(TAG, "selectedAPINum="+selectedAPINum);
+
                     switch (selectedAPINum) {
                         case (CODES.TRIP):
-                            mqttWrapper.TRE_SendTrip();
+                            SFMqttWrapper.sendTrip();
                             break;
                         case (CODES.MICRO_TRIP):
-                            mqttWrapper.TRE_SendMicroTrip();
+                            SFMqttWrapper.sendMicroTrip();
                             break;
                         case (CODES.HFD_CAPABILITY_INFORMATION):
-                            mqttWrapper.TRE_SendHfd();
-                            break;
-                        case (CODES.HFD_DATA):
-                            mqttWrapper.TRE_SendHfd();
+                            SFMqttWrapper.sendHfd();
                             break;
                         case (CODES.DIAGNOSTIC_INFORMATION):
-                            mqttWrapper.TRE_SendDiagInfo();
+                            SFMqttWrapper.sendDiagInfo();
                             break;
                         case (CODES.DRIVING_COLLISION_WARNING):
-                            mqttWrapper.TRE_SendDrivingCollisionWarning();
+                            SFMqttWrapper.sendDrivingCollisionWarning();
                             break;
                         case (CODES.PARKING_COLLISION_WARNING):
-                            mqttWrapper.TRE_SendParkingCollisionWarning();
+                            SFMqttWrapper.sendParkingCollisionWarning();
                             break;
                         case (CODES.BATTERY_WARNING):
-                            mqttWrapper.TRE_SendBatteryWarning();
+                            SFMqttWrapper.sendBatteryWarning();
                             break;
                         case (CODES.UNPLUGGED_WARNING):
-                            mqttWrapper.TRE_SendUnpluggedWarning();
+                            SFMqttWrapper.sendUnpluggedWarning();
                             break;
                         case (CODES.TURNOFF_WARNING):
-                            mqttWrapper.TRE_SendTurnOffWarning();
+                            SFMqttWrapper.sendTurnOffWarning();
                             break;
                         default:
                             Toast.makeText(getApplicationContext(), R.string.select_api, Toast.LENGTH_SHORT).show();
